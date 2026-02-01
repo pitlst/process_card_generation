@@ -11,8 +11,8 @@ def get_data(path: Path):
 
 def page_make(path: Path):
     '''通用的基础资料维护页面生成'''
-    st.info("少量的维护可以直接在页面更改，大量更新建议下载模板进行更新，模板中会带有现有的数据，目前没有做多人同时操作的隔离，所以需要注意维护数据时的冲突问题")
-
+    st.info("少量的维护可以直接在页面更改，大量更新建议下载模板进行更新，模板中会带有现有的数据，因为开发周期，目前没有做excel的处理，需要将excel导出为csv才能上传")
+    st.warning("目前没有做多人同时操作的隔离，所以需要注意维护数据时的冲突问题")
     num_rows = 'fixed'
     temp_data = get_data(path)
     with st.container(horizontal=True):
@@ -28,7 +28,7 @@ def page_make(path: Path):
             save_label = st.button('保存到后台中', icon=':material/save:')
 
         with st.container():
-            uploaded_file = st.file_uploader('**上传批量更新的数据**', type=['csv, xlsx, xls'])
+            uploaded_file = st.file_uploader('**上传批量更新的数据**', type=['csv'])
             add_label = st.toggle('启用新增(会导致排序功能失效，不影响修改)')
 
     if add_label:
@@ -43,5 +43,6 @@ def page_make(path: Path):
         get_data.clear()
         st.toast('缓存刷新成功', icon='🎉')
     if not uploaded_file is None:
-
-        ...
+        pd.read_csv(uploaded_file, encoding='utf-8').to_csv(path, encoding='utf-8', index=False)
+        get_data.clear()
+        st.toast('更新数据成功', icon='🎉')
