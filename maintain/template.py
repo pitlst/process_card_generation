@@ -102,16 +102,20 @@ def check_empty(item: dict, key_str: str):
         return False
     return True
 
+# ------------------------------------------
+#  主页面定义的开始
+#  MARK: 主页面定义的开始
+# ------------------------------------------
 
 title = '工序卡模板维护'
 st.set_page_config(page_title=title, layout='wide')
 st.title(title)
 
 with st.container(horizontal=True):
-    add_label = st.button('新增', icon=':material/add:')
-    change_labek = st.button('修改', icon=':material/edit:')
-    delete_label = st.button('删除', icon=':material/delete:')
-    refresh_label = st.button('刷新', icon=':material/refresh:')
+    add_label = st.button('新增', icon=':material/add:', shortcut='alt+w')
+    change_labek = st.button('修改', icon=':material/edit:', shortcut='alt+e')
+    delete_label = st.button('删除', icon=':material/delete:', shortcut='alt+d')
+    refresh_label = st.button('刷新', icon=':material/refresh:', shortcut='alt+f')
 
 local_data = get_template_data()
 temp_data = pd.DataFrame({
@@ -139,6 +143,7 @@ def detail_view():
         st.session_state['page_item']['模板编码'] = st.text_input('模板编码', value=st.session_state['page_item']['模板编码'])
         st.session_state['page_item']['工序编码'] = st.text_input('工序编码', value=st.session_state['page_item']['工序编码'])
         st.session_state['page_item']['工序名称'] = st.text_input('工序名称', value=st.session_state['page_item']['工序名称'])
+    with st.container(horizontal=True):
         st.session_state['page_item']['适用车型'] = st.text_input('适用车型', value=st.session_state['page_item']['适用车型'])
         st.session_state['page_item']['专业分类'] = st.text_input('专业分类', value=st.session_state['page_item']['专业分类'])
         total_configuration = get_total_configuration()
@@ -162,7 +167,11 @@ def detail_view():
                 '对应工艺装备': [[_ch['工艺装备编码'] for _ch in ch['对应工艺装备']] for ch in st.session_state['page_item']['工步']],
             }
         )
-        edited_df = st.data_editor(
+        with st.container(horizontal=True):
+            entry_add_label = st.button('新增', icon=':material/add:', shortcut='alt++shift+w')
+            entry_change_labek = st.button('修改', icon=':material/edit:', shortcut='alt++shift+e')
+            entry_delete_label = st.button('删除', icon=':material/delete:', shortcut='alt++shift+d')
+        edited_df = st.dataframe(
             temp_df,
             column_config={
                 '作业顺序': st.column_config.NumberColumn(
@@ -189,17 +198,16 @@ def detail_view():
                     '是否关键质量控制点',
                     default=False),
             },
+            on_select='rerun',
+            selection_mode='single-row',
             hide_index=True)
-    st.text('模板的工步分录')
-    if 1:
-        ...
     with st.container(horizontal=True):
-        if st.button('提交'):
+        if st.button('提交', icon=':material/send:', shortcut='enter'):
             check_label = True
             check_label = check_empty(st.session_state['page_item'], '模板编码')
             if check_label:
                 st.rerun()
-        if st.button('取消'):
+        if st.button('取消', icon=':material/close:', shortcut='esc'):
             st.rerun()
 
 
