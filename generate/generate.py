@@ -2,24 +2,16 @@ import datetime
 import streamlit as st
 import pandas as pd
 import json
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 from pathlib import Path
-from matplotlib import font_manager
-
-font_path = Path(__file__).parent / 'SourceHanSansSC-Normal.otf'
-font_manager.fontManager.addfont(font_path)
-prop = font_manager.FontProperties(fname=font_path)
-
-plt.rcParams['font.family'] = prop.get_name()
-plt.rcParams['axes.unicode_minus'] = False
+from docxtpl import DocxTemplate
 
 title = '工序卡生成'
 st.set_page_config(page_title=title, layout='wide')
 st.title(title)
 
 path = Path(__file__).parent.parent / 'database' / '工序卡模板.json'
-pdf_path = Path(__file__).parent.parent / 'source'
+template_path = Path(__file__).parent.parent / 'template' / "工序卡模板.docx"
+source_path = Path(__file__).parent.parent / "source"
 
 if 'res' not in st.session_state:
     st.session_state['res'] = None
@@ -27,52 +19,46 @@ if 'res' not in st.session_state:
 
 def make_main_run(item: dict):
     '''绘图的主逻辑'''
-    def check_pdf_file():
-        '''检查并删除多余的pdf'''
-        reuqest_time = datetime.datetime.now() - datetime.timedelta(hours=1)
-        for item_file in pdf_path.iterdir():
-            if not item_file.is_file():
-                continue
-            # 检查是否为 PDF 文件
-            if item_file.suffix.lower() != '.pdf':
-                continue
-            # 获取文件名（不含扩展名）作为时间字符串
-            file_time = datetime.datetime.strptime(item_file.stem, '%Y-%m-%d %H:%M:%S')
-            if file_time < reuqest_time:
-                item_file.unlink()
+    temp_name = f'{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.docx'
+    temp_path = source_path / temp_name
+    '''生成对应的文件'''
+    doc = DocxTemplate(template_path)
+    context = {
+        'confidentiality_level': item["密级/保密期限"],
+        'project_name': item["项目名称"],
+        'process_name': item["工序名称"],
+        'document_number': item["文件编号"],
+        'component_part_number': item["零部件图号"],
+        'compile_person': item["编制"],
+        'compile_time': item["编制日期"],
+        'proofread_person': item["校对"],
+        'proofread_time': item["校对日期"],
+        'review_person': item["审核"],
+        'review_time': item["审核日期"],
+        'standardization_person': item["标准化"],
+        'standardization_time': item["标准化日期"],
+        'countersign_person': item["会签"],
+        'countersign_time': item["会签日期"],
+        'ratify_person': item["批准"],
+        'ratify_time': item["批准日期"],
+    }
+    doc.render(context)
+    doc.save(temp_path)
 
-    # A3大小
-    fig, ax = plt.subplots(figsize=(420/25.4, 297/25.4))
-    # 隐藏坐标轴，设置绘图范围 0-100 便于定位
-    ax.set_xlim(0, 100)
-    ax.set_ylim(0, 100)
-    ax.axis('off')
-    # 外边框
-    ax.add_patch(patches.Rectangle((2, 2), 96, 96, linewidth=1, edgecolor='black', facecolor='none'))
-    ax.add_patch(patches.Rectangle((4, 5), 92, 90, linewidth=1, edgecolor='black', facecolor='none'))
-    # 左侧密级
-    ax.text(6, 95.5, "株机公司普通商密 ▲ 5年", fontsize=14, fontweight='bold', horizontalalignment='left')
-    # 右侧工艺代码
-    ax.text(94, 95.5, "工艺 22", fontsize=14, fontweight='bold', horizontalalignment='right')
-    # 标题
-    ax.text(50, 85, "工艺文件", fontsize=48, fontweight='bold', horizontalalignment='center')
-    # 产品型号
-    ax.text(24, 70, f"产品型号   {item["项目名称"]}", fontsize=24, horizontalalignment='right')
-    ax.plot([30, 47], [69, 69], 'k-', linewidth=1.5)
-    # 文件名称
-    ax.text(61, 70, f"文件名称   {item["工序名称"]}", fontsize=24, horizontalalignment='right')
-    ax.plot([64, 80], [69, 69], 'k-', linewidth=1.5)
-    # 文件编号
-    ax.text(24, 50, f"文件编号   AJP1023290A-22-01", fontsize=24, horizontalalignment='right')
-    ax.plot([30, 47], [49, 49], 'k-', linewidth=1.5)
-
-    temp_pdf_name = f'{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.pdf'
-    temp_pdf_path = pdf_path / temp_pdf_name
-    check_pdf_file()
-    plt.savefig(temp_pdf_path, dpi=300, bbox_inches='tight', facecolor='white')
-    with open(temp_pdf_path, "rb") as pdf_file:
-        pdf_bytes = pdf_file.read()
-    return temp_pdf_name, temp_pdf_path, pdf_bytes
+    '''检查并删除多余的pdf'''
+    reuqest_time = datetime.datetime.now() - datetime.timedelta(minutes=10)
+    for item_file in source_path.iterdir():
+        if not item_file.is_file():
+            continue
+        if item_file.suffix.lower() != '.docx':
+            continue
+        file_time = datetime.datetime.strptime(item_file.stem, '%Y-%m-%d %H:%M:%S')
+        if file_time < reuqest_time:
+            item_file.unlink()
+    '''返回文件的字节流'''
+    with open(temp_path, "rb") as _file:
+        _bytes = _file.read()
+    return temp_name, _bytes
 
 
 @st.cache_data(ttl=3600, show_time=True, scope='session')
@@ -91,6 +77,9 @@ def generate_page(index: int):
         temp_config['项目名称'] = st.text_input('项目名称')
         temp_config['项目编码'] = st.text_input('项目编码')
         temp_config['密级/保密期限'] = st.selectbox('密级/保密期限', options=['普通商密', '工作秘密'])
+    with st.container(horizontal=True):
+        temp_config['文件编号'] = st.text_input('文件编号')
+        temp_config['零部件图号'] = st.text_input('零部件图号')
     with st.container(horizontal=True):
         temp_config['编制'] = st.text_input('编制')
         temp_config['编制日期'] = st.date_input('编制日期', datetime.datetime.now())
@@ -132,18 +121,18 @@ def generate_page(index: int):
             submit_label = st.button('双击开始生成', icon=':material/send:', shortcut='enter')
             cancel_label = st.button('返回', icon=':material/close:', shortcut='esc')
     else:
-        temp_pdf_name, temp_pdf_path, pdf_bytes = st.session_state['res']
+        temp_name, docx_bytes = st.session_state['res']
+        st.info("对应的生成记录会在后台保存10分钟，找回请检查后台文件中的source文件夹")
         with st.container(horizontal=True):
             submit_label = st.button('双击重新生成', icon=':material/send:', shortcut='enter')
             cancel_label = st.button('返回', icon=':material/close:', shortcut='esc')
             st.download_button(
                 label='下载绘制结果',
-                data=pdf_bytes,
-                file_name=temp_pdf_name,
-                mime='application/pdf',
+                data=docx_bytes,
+                file_name=temp_name,
+                mime='application/docx',
                 icon=':material/download:',
             )
-        st.pdf(temp_pdf_path, height='stretch')
     if submit_label:
         st.session_state['res'] = make_main_run(temp_config)
     elif cancel_label:
