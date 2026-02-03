@@ -11,7 +11,7 @@ def get_data(path: Path):
 
 def page_make(path: Path):
     '''通用的基础资料维护页面生成'''
-    st.info("少量的维护可以直接在页面更改，大量更新建议下载模板进行更新，模板中会带有现有的数据，因为开发周期，目前没有做excel的处理，需要将excel导出为csv才能上传")
+    st.info("少量的维护可以直接在页面更改，大量更新建议下载模板进行更新，模板中会带有现有的数据，目前没有做excel的处理，需要将excel导出为csv才能上传")
     st.warning("目前没有做多人同时操作的隔离，所以需要注意维护数据时的冲突问题")
     num_rows = 'fixed'
     temp_data = get_data(path)
