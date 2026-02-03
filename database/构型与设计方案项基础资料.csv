@@ -1,2 +1,11 @@
 构型项编码,构型项名称,设计方案项编码,设计方案项名称,备注
 TEST1,测试,Test11,测试,
+CFG_TC_01,Tc车(带司机室拖车),SCH_INT_STD,标准内饰设计方案,蓝色系
+CFG_TC_01,Tc车(带司机室拖车),SCH_CAB_ATO,全自动驾驶司机室方案,GOA4等级
+CFG_MP_01,Mp车(带受电弓动车),SCH_TRC_HV,高压牵引电路方案,含受电弓
+CFG_MP_01,Mp车(带受电弓动车),SCH_BOG_M,动车转向架安装方案,带电机
+CFG_M_01,M车(不带受电弓动车),SCH_AIR_HVY,大功率空调系统方案,南方湿热地区
+CFG_ALL_01,通用车型,SCH_DR_ELEC,电动塞拉门系统,防夹功能
+CFG_ALL_01,通用车型,SCH_PIS_LCD,LCD动态地图显示方案,42寸屏
+CFG_ALL_01,通用车型,SCH_BRK_EP,电空制动系统方案,克诺尔
+CFG_TC_02,Tc车(巡检车),SCH_DET_SYS,轨道巡检系统方案,激光雷达

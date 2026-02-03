@@ -1,2 +1,17 @@
 物料编码,物料名称,物料计数单位
 ID0001,测试物料,个
+M_BLT_HEX_M10,六角头螺栓 M10x45 8.8级,个
+M_WSH_FLT_M10,平垫圈 10,个
+M_WSH_SPR_M10,弹簧垫圈 10,个
+M_NUT_HEX_M10,六角螺母 M10,个
+M_CAB_SEAT_L,司机室座椅(左),套
+M_PS_SEAT_BNCH,客室长条座椅(6人),套
+M_AC_UNIT_ROOF,车顶空调机组 40kW,台
+M_PANTOGRAPH,单臂受电弓,台
+M_DOOR_LEAF_L,左侧门页组件,扇
+M_INT_PNL_SIDE,侧墙装饰板(玻璃钢),张
+M_FLR_COVER_PVC,PVC地板布 2mm,卷
+M_CBL_PWR_95,单芯动力电缆 95mm2,米
+M_CONN_CIRC_12,12芯圆形连接器插头,个
+M_SEAL_PU_BLK,聚氨酯密封胶(黑色),支
+M_GRD_BRAID,接地编织线 L=300mm,根

@@ -219,11 +219,11 @@ def detail_workstep_view():
         st.session_state['page_workstep_item']['资质要求'] = st.text_input('资质要求', st.session_state['page_workstep_item']['资质要求'])
     st.session_state['page_workstep_item']['注意内容'] = st.text_area('注意内容', st.session_state['page_workstep_item']['注意内容'])
     with st.container(horizontal=True):
-        st.session_state['page_workstep_item']['是否关键工步'] = st.checkbox("是否关键工步", value=st.session_state['page_workstep_item']['是否关键工步'])
-        st.session_state['page_workstep_item']['是否特殊过程'] = st.checkbox("是否特殊过程", value=st.session_state['page_workstep_item']['是否特殊过程'])
-        st.session_state['page_workstep_item']['是否八防工序'] = st.checkbox("是否八防工序", value=st.session_state['page_workstep_item']['是否八防工序'])
-        st.session_state['page_workstep_item']['是否五防工序'] = st.checkbox("是否五防工序", value=st.session_state['page_workstep_item']['是否五防工序'])
-        st.session_state['page_workstep_item']['是否关键质量控制点'] = st.checkbox("是否关键质量控制点", value=st.session_state['page_workstep_item']['是否关键质量控制点'])
+        st.session_state['page_workstep_item']['是否关键工步'] = st.checkbox('是否关键工步', value=st.session_state['page_workstep_item']['是否关键工步'])
+        st.session_state['page_workstep_item']['是否特殊过程'] = st.checkbox('是否特殊过程', value=st.session_state['page_workstep_item']['是否特殊过程'])
+        st.session_state['page_workstep_item']['是否八防工序'] = st.checkbox('是否八防工序', value=st.session_state['page_workstep_item']['是否八防工序'])
+        st.session_state['page_workstep_item']['是否五防工序'] = st.checkbox('是否五防工序', value=st.session_state['page_workstep_item']['是否五防工序'])
+        st.session_state['page_workstep_item']['是否关键质量控制点'] = st.checkbox('是否关键质量控制点', value=st.session_state['page_workstep_item']['是否关键质量控制点'])
 
     total_equipment = get_total_equipment()
     default = None
@@ -330,7 +330,7 @@ def main():
     title = '工序卡模板维护'
     st.set_page_config(page_title=title, layout='wide')
     st.title(title)
-    st.warning("目前没有做多人同时操作的隔离，所以需要注意维护数据时的冲突问题")
+    st.warning('目前没有做多人同时操作的隔离，所以需要注意维护数据时的冲突问题')
 
     with st.container(horizontal=True):
         add_label = st.button('新增', icon=':material/add:', shortcut='alt+w')

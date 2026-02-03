@@ -10,8 +10,8 @@ st.set_page_config(page_title=title, layout='wide')
 st.title(title)
 
 path = Path(__file__).parent.parent / 'database' / '工序卡模板.json'
-template_path = Path(__file__).parent.parent / 'template' / "工序卡模板.docx"
-source_path = Path(__file__).parent.parent / "source"
+template_path = Path(__file__).parent.parent / 'template' / '工序卡模板.docx'
+source_path = Path(__file__).parent.parent / 'source'
 
 if 'res' not in st.session_state:
     st.session_state['res'] = None
@@ -24,23 +24,26 @@ def make_main_run(item: dict):
     '''生成对应的文件'''
     doc = DocxTemplate(template_path)
     context = {
-        'confidentiality_level': item["密级/保密期限"],
-        'project_name': item["项目名称"],
-        'process_name': item["工序名称"],
-        'document_number': item["文件编号"],
-        'component_part_number': item["零部件图号"],
-        'compile_person': item["编制"],
-        'compile_time': item["编制日期"],
-        'proofread_person': item["校对"],
-        'proofread_time': item["校对日期"],
-        'review_person': item["审核"],
-        'review_time': item["审核日期"],
-        'standardization_person': item["标准化"],
-        'standardization_time': item["标准化日期"],
-        'countersign_person': item["会签"],
-        'countersign_time': item["会签日期"],
-        'ratify_person': item["批准"],
-        'ratify_time': item["批准日期"],
+        'confidentiality_level': item['密级/保密期限'],
+        'project_name': item['项目名称'],
+        'process_name': item['工序名称'],
+        'process_code': item['工序编码'],
+        'document_number': item['文件编号'],
+        'component_part_number': item['零部件图号'],
+        'compile_person': item['编制'],
+        'compile_time': item['编制日期'],
+        'proofread_person': item['校对'],
+        'proofread_time': item['校对日期'],
+        'review_person': item['审核'],
+        'review_time': item['审核日期'],
+        'standardization_person': item['标准化'],
+        'standardization_time': item['标准化日期'],
+        'countersign_person': item['会签'],
+        'countersign_time': item['会签日期'],
+        'ratify_person': item['批准'],
+        'ratify_time': item['批准日期'],
+        'applicable_vehicle_models': item['适用车型'],
+        'professional_classification': item['专业分类'],
     }
     doc.render(context)
     doc.save(temp_path)
@@ -56,7 +59,7 @@ def make_main_run(item: dict):
         if file_time < reuqest_time:
             item_file.unlink()
     '''返回文件的字节流'''
-    with open(temp_path, "rb") as _file:
+    with open(temp_path, 'rb') as _file:
         _bytes = _file.read()
     return temp_name, _bytes
 
@@ -122,7 +125,7 @@ def generate_page(index: int):
             cancel_label = st.button('返回', icon=':material/close:', shortcut='esc')
     else:
         temp_name, docx_bytes = st.session_state['res']
-        st.info("对应的生成记录会在后台保存10分钟，找回请检查后台文件中的source文件夹")
+        st.info('对应的生成记录会在后台保存10分钟，找回请检查后台文件中的source文件夹')
         with st.container(horizontal=True):
             submit_label = st.button('双击重新生成', icon=':material/send:', shortcut='enter')
             cancel_label = st.button('返回', icon=':material/close:', shortcut='esc')
