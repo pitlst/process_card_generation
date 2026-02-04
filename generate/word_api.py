@@ -15,8 +15,6 @@ def create_document(file_path: Path, item: dict):
 
     # 新建文档
     doc = word.Documents.Add()
-    # 获取 Selection 对象，用于操作光标位置的内容
-    selection = word.Selection
 
     # 设置页面布局：A4 横向
     # wdOrientLandscape = 1, wdPaperA4 = 7
@@ -488,7 +486,83 @@ def create_document(file_path: Path, item: dict):
     date_range.ParagraphFormat.LeftIndent = 0
     date_range.ParagraphFormat.RightIndent = 0
 
+    # 移动光标到文档末尾，确保在最后插入分页符
+    word.Selection.EndKey(Unit=6) # wdStory
+    
+    # 插入分页符，创建新页面
+    # wdPageBreak = 7
+    word.Selection.InsertBreak(Type=7)
+    
+    # 在新页面（第二页）绘制外边框矩形
+    # 注意：Shapes.AddShape 默认锚定到当前页或当前 Selection
+    # 为了确保添加在第二页，我们需要指定锚点或者确保 Selection 在第二页
+    # 前面已经将 Selection 移动到了文档末尾（第二页）
+    
+    # 再次移动光标到文档末尾，准备在新页面添加内容
+    # 这一步至关重要，因为 InsertBreak 后光标可能还在前一页末尾或分页符处
+    word.Selection.EndKey(Unit=6) # wdStory
 
+    # 添加第二页的外矩形
+    # 只要光标在第二页，Shapes.AddShape 就会默认锚定到第二页
+    # 参数与第一页一致
+    rect_page2 = doc.Shapes.AddShape(1, left, top, width, height)
+    
+    # 设置样式
+    rect_page2.Fill.Visible = 0
+    rect_page2.Line.Visible = 1
+    rect_page2.Line.ForeColor.RGB = 0
+    rect_page2.Line.Weight = 1.2
+
+   # 在矩形框左上角添加文字
+    text_frame_2 = rect_page2.TextFrame
+    # 使用制表符分隔左侧和右侧文字
+    text_frame_2.TextRange.Text = " 株机公司普通商密▲5年 \t工艺22"
+
+    # 设置字体：思源宋体，小三（15磅）
+    text_frame_2.TextRange.Font.Name = "思源宋体"
+    text_frame_2.TextRange.Font.Size = 15
+    text_frame_2.TextRange.Font.Color = 0  # 黑色
+
+    # 设置制表位以实现右对齐效果
+    # 清除原有制表位
+    text_frame_2.TextRange.ParagraphFormat.TabStops.ClearAll()
+    # 添加右对齐制表位
+    text_frame_2.TextRange.ParagraphFormat.TabStops.Add(Position=width - 0.25 * cm_to_points, Alignment=2, Leader=0)
+
+    # 设置对齐方式：左上角
+    # msoAnchorTop = 1
+    text_frame_2.VerticalAnchor = 1
+    # wdAlignParagraphLeft = 0
+    text_frame_2.TextRange.ParagraphFormat.Alignment = 0
+
+    # # 移除文本框内边距以紧贴边框
+    text_frame_2.MarginLeft = 0
+    text_frame_2.MarginTop = 0
+    text_frame_2.MarginRight = 0
+    text_frame_2.MarginBottom = 0
+
+    # 在文字下方创建一个新的矩形框（主体内容区域）
+    # 预留标题高度约 1.15cm
+    header_height = 1.15 * cm_to_points
+    # 内部矩形与外部矩形的间距：0.5cm
+    padding = 0.5 * cm_to_points
+
+    inner_top = top + header_height
+    # 左边距增加 padding
+    inner_left = left + padding
+    # 宽度减少左右两边的 padding
+    inner_width = width - 2 * padding
+    # 高度减少顶部的 header_height 和底部的 padding
+    inner_height = height - header_height - padding
+
+    # 添加内部矩形
+    rect_inner2 = doc.Shapes.AddShape(1, inner_left, inner_top, inner_width, inner_height)
+
+    # 设置内部矩形样式（与外部一致）
+    rect_inner2.Fill.Visible = 0
+    rect_inner2.Line.Visible = 1
+    rect_inner2.Line.ForeColor.RGB = 0
+    rect_inner2.Line.Weight = 1.2
 
 
     # 保存文档
