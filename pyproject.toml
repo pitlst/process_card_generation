@@ -8,5 +8,6 @@ dependencies = [
     "docxtpl>=0.20.2",
     "matplotlib>=3.10.8",
     "pandas>=2.3.3",
+    "pywin32>=311",
     "streamlit[pdf]>=1.53.1",
 ]

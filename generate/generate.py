@@ -19,7 +19,7 @@ if 'res' not in st.session_state:
 
 def make_main_run(item: dict):
     '''绘图的主逻辑'''
-    temp_name = f'{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.docx'
+    temp_name = f'{datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.docx'
     temp_path = source_path / temp_name
     '''生成对应的文件'''
     doc = DocxTemplate(template_path)
@@ -55,7 +55,7 @@ def make_main_run(item: dict):
             continue
         if item_file.suffix.lower() != '.docx':
             continue
-        file_time = datetime.datetime.strptime(item_file.stem, '%Y-%m-%d %H:%M:%S')
+        file_time = datetime.datetime.strptime(item_file.stem, '%Y-%m-%d-%H-%M-%S')
         if file_time < reuqest_time:
             item_file.unlink()
     '''返回文件的字节流'''
