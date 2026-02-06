@@ -1,6 +1,7 @@
 import win32com.client
 from pathlib import Path
 
+CM_TO_POINT = 28.35
 
 def create_document(file_path: Path, item: dict):
     # 获取绝对路径，Word COM 接口通常需要绝对路径
@@ -8,14 +9,11 @@ def create_document(file_path: Path, item: dict):
     # 检查文件是否已存在，如果存在先删除，避免 SaveAs 弹窗或报错
     if file_path.exists():
         file_path.unlink()
-    # 启动 Word 应用程序
-    word = win32com.client.Dispatch("Word.Application")
-    word.Visible = False  # 设置为 True 可以看到 Word 界面，方便调试；设置为 False 则后台运行
+    word = win32com.client.Dispatch("Word.Application") # 启动 Word 应用程序
+    word.Visible = True  # 设置为 True 可以看到 Word 界面，方便调试；设置为 False 则后台运行
     word.DisplayAlerts = 0  # 禁用警告弹窗
-
-    # 新建文档
-    doc = word.Documents.Add()
-
+    doc = word.Documents.Add() # 新建文档
+    
     # 设置页面布局：A4 横向
     # wdOrientLandscape = 1, wdPaperA4 = 7
     doc.PageSetup.Orientation = 1
@@ -23,11 +21,24 @@ def create_document(file_path: Path, item: dict):
 
     # 设置页边距：左 2.2cm，上下右 0.5cm
     # 直接计算点数 (1 cm ≈ 28.35 points)，避免调用 word.CentimetersToPoints 可能出现的 COM 错误
-    cm_to_points = 28.35
-    doc.PageSetup.LeftMargin = 2.2 * cm_to_points
-    doc.PageSetup.RightMargin = 0.5 * cm_to_points
-    doc.PageSetup.TopMargin = 0.5 * cm_to_points
-    doc.PageSetup.BottomMargin = 0.5 * cm_to_points
+    
+    doc.PageSetup.LeftMargin = 2.2 * CM_TO_POINT
+    doc.PageSetup.RightMargin = 0.5 * CM_TO_POINT
+    doc.PageSetup.TopMargin = 0.5 * CM_TO_POINT
+    doc.PageSetup.BottomMargin = 0.5 * CM_TO_POINT
+
+    page_width = doc.PageSetup.PageWidth
+    page_height = doc.PageSetup.PageHeight
+    
+    left = doc.PageSetup.LeftMargin
+    top = doc.PageSetup.TopMargin
+    width = page_width - left - doc.PageSetup.RightMargin
+    height = page_height - top - doc.PageSetup.BottomMargin
+    
+    doc.PageSetup.LeftMargin = 2.2 * CM_TO_POINT
+    doc.PageSetup.RightMargin = 0.5 * CM_TO_POINT
+    doc.PageSetup.TopMargin = 0.5 * CM_TO_POINT
+    doc.PageSetup.BottomMargin = 0.5 * CM_TO_POINT
 
     # 绘制页面边框矩形（沿着页边距）
     # 获取页面宽高和边距
@@ -62,7 +73,7 @@ def create_document(file_path: Path, item: dict):
     # 清除原有制表位
     text_frame.TextRange.ParagraphFormat.TabStops.ClearAll()
     # 添加右对齐制表位
-    text_frame.TextRange.ParagraphFormat.TabStops.Add(Position=width - 0.25 * cm_to_points, Alignment=2, Leader=0)
+    text_frame.TextRange.ParagraphFormat.TabStops.Add(Position=width - 0.25 * CM_TO_POINT, Alignment=2, Leader=0)
 
     # 设置对齐方式：左上角
     # msoAnchorTop = 1
@@ -76,11 +87,13 @@ def create_document(file_path: Path, item: dict):
     text_frame.MarginRight = 0
     text_frame.MarginBottom = 0
 
+    rect.ZOrder(5)
+
     # 在文字下方创建一个新的矩形框（主体内容区域）
     # 预留标题高度约 1.15cm
-    header_height = 1.15 * cm_to_points
+    header_height = 1.15 * CM_TO_POINT
     # 内部矩形与外部矩形的间距：0.5cm
-    padding = 0.5 * cm_to_points
+    padding = 0.5 * CM_TO_POINT
 
     inner_top = top + header_height
     # 左边距增加 padding
@@ -125,12 +138,12 @@ def create_document(file_path: Path, item: dict):
     # 使用独立的文本框，以便于精确定位
     # 位置：内部矩形左上角 + 一定偏移（避开“工艺文件”大字）
     # 假设“工艺文件”高度约 2cm，我们在其下方添加文本框
-    model_top_offset = 4.0 * cm_to_points
-    model_left_offset = 3.5 * cm_to_points  # 离内部矩形左边界 0.5cm
+    model_top_offset = 4.0 * CM_TO_POINT
+    model_left_offset = 3.5 * CM_TO_POINT  # 离内部矩形左边界 0.5cm
 
     # 添加文本框 (使用矩形 msoShapeRectangle = 1 代替 msoShapeTextBox = 17)
     # 某些 Word 版本中 17 对应 msoShapeSmileyFace
-    model_textbox = doc.Shapes.AddShape(1, inner_left + model_left_offset, inner_top + model_top_offset, 15 * cm_to_points, 1.5 * cm_to_points)
+    model_textbox = doc.Shapes.AddShape(1, inner_left + model_left_offset, inner_top + model_top_offset, 15 * CM_TO_POINT, 1.5 * CM_TO_POINT)
 
     # 设置文本框样式：无填充、无边框
     model_textbox.Fill.Visible = 0
@@ -172,10 +185,10 @@ def create_document(file_path: Path, item: dict):
     # 假设文本框宽度 10cm，我们需要计算 Left 坐标使其靠右
     # 这里我们让它距离右边界一定距离，或者直接计算坐标
     # 假设放在右侧，与左侧的“产品型号”在同一水平线上
-    name_left_offset = inner_width - 8.0 * cm_to_points - 3.0 * cm_to_points # 离内部矩形右边界 3cm
+    name_left_offset = inner_width - 8.0 * CM_TO_POINT - 3.0 * CM_TO_POINT # 离内部矩形右边界 3cm
     
     # 添加文本框 (使用矩形 msoShapeRectangle = 1)
-    name_textbox = doc.Shapes.AddShape(1, inner_left + name_left_offset, inner_top + model_top_offset, 15 * cm_to_points, 1.5 * cm_to_points)
+    name_textbox = doc.Shapes.AddShape(1, inner_left + name_left_offset, inner_top + model_top_offset, 15 * CM_TO_POINT, 1.5 * CM_TO_POINT)
     
     # 设置文本框样式：无填充、无边框
     name_textbox.Fill.Visible = 0
@@ -213,12 +226,12 @@ def create_document(file_path: Path, item: dict):
     # 在“工艺文件”下方左侧添加文件编号信息（第二行）
     # 位置：内部矩形左上角 + 垂直偏移（第一行下方）
     # 假设第一行高度占用约 1.5cm，我们下移一些
-    number_top_offset = model_top_offset + 2.0 * cm_to_points # 在“产品型号”下方 1cm
+    number_top_offset = model_top_offset + 2.0 * CM_TO_POINT # 在“产品型号”下方 1cm
     number_left_offset = model_left_offset # 与“产品型号”左对齐
     
     # 添加文本框 (使用矩形 msoShapeRectangle = 1)
     # 宽度设宽一点以容纳长编号
-    number_textbox = doc.Shapes.AddShape(1, inner_left + number_left_offset, inner_top + number_top_offset, 15 * cm_to_points, 1.5 * cm_to_points)
+    number_textbox = doc.Shapes.AddShape(1, inner_left + number_left_offset, inner_top + number_top_offset, 15 * CM_TO_POINT, 1.5 * CM_TO_POINT)
     
     # 设置文本框样式：无填充、无边框
     number_textbox.Fill.Visible = 0
@@ -261,7 +274,7 @@ def create_document(file_path: Path, item: dict):
     
     # 添加文本框 (使用矩形 msoShapeRectangle = 1)
     # 宽度设宽一点
-    part_textbox = doc.Shapes.AddShape(1, inner_left + part_left_offset, inner_top + part_top_offset, 15 * cm_to_points, 1.5 * cm_to_points)
+    part_textbox = doc.Shapes.AddShape(1, inner_left + part_left_offset, inner_top + part_top_offset, 15 * CM_TO_POINT, 1.5 * CM_TO_POINT)
     
     # 设置文本框样式：无填充、无边框
     part_textbox.Fill.Visible = 0
@@ -296,14 +309,14 @@ def create_document(file_path: Path, item: dict):
 
     # 在下方添加编制、校对、审核信息（第三行）
     # 位置：内部矩形水平居中，垂直位于第二行下方
-    sign_top_offset = part_top_offset + 5.0 * cm_to_points # 在第二行下方 1.2cm
+    sign_top_offset = part_top_offset + 5.0 * CM_TO_POINT # 在第二行下方 1.2cm
     
     # 文本框宽度设为内部矩形宽度，以便居中
     sign_width = inner_width
-    sign_height = 1.5 * cm_to_points
+    sign_height = 1.5 * CM_TO_POINT
     
     # 添加文本框 (使用矩形 msoShapeRectangle = 1)
-    sign_textbox = doc.Shapes.AddShape(1, inner_left + 4.0 * cm_to_points, inner_top + sign_top_offset, sign_width, sign_height)
+    sign_textbox = doc.Shapes.AddShape(1, inner_left + 4.0 * CM_TO_POINT, inner_top + sign_top_offset, sign_width, sign_height)
     
     # 设置文本框样式：无填充、无边框
     sign_textbox.Fill.Visible = 0
@@ -366,10 +379,10 @@ def create_document(file_path: Path, item: dict):
 
     # 在编制校对审核信息下方添加标准化、会签、批准信息（第四行）
     # 位置：内部矩形水平居中，垂直位于第三行下方
-    approve_top_offset = sign_top_offset + 1.2 * cm_to_points # 在编制行下方 1.2cm
+    approve_top_offset = sign_top_offset + 1.2 * CM_TO_POINT # 在编制行下方 1.2cm
     
     # 添加文本框 (使用矩形 msoShapeRectangle = 1)
-    approve_textbox = doc.Shapes.AddShape(1, inner_left + 4.0 * cm_to_points, inner_top + approve_top_offset, sign_width, sign_height)
+    approve_textbox = doc.Shapes.AddShape(1, inner_left + 4.0 * CM_TO_POINT, inner_top + approve_top_offset, sign_width, sign_height)
     
     # 设置文本框样式：无填充、无边框
     approve_textbox.Fill.Visible = 0
@@ -422,10 +435,10 @@ def create_document(file_path: Path, item: dict):
 
     # 在批准信息下方添加公司名称（第五行）
     # 位置：内部矩形水平居中，垂直位于第四行下方
-    company_top_offset = approve_top_offset + 3.5 * cm_to_points # 在批准行下方 1.2cm
+    company_top_offset = approve_top_offset + 3.5 * CM_TO_POINT # 在批准行下方 1.2cm
     
     # 添加文本框 (使用矩形 msoShapeRectangle = 1)
-    company_textbox = doc.Shapes.AddShape(1, inner_left + 8.0 * cm_to_points, inner_top + company_top_offset, sign_width, sign_height)
+    company_textbox = doc.Shapes.AddShape(1, inner_left + 8.0 * CM_TO_POINT, inner_top + company_top_offset, sign_width, sign_height)
     
     # 设置文本框样式：无填充、无边框
     company_textbox.Fill.Visible = 0
@@ -455,10 +468,10 @@ def create_document(file_path: Path, item: dict):
 
     # 在公司名称下方添加日期页码信息（第六行）
     # 位置：内部矩形水平居中，垂直位于第五行下方
-    date_top_offset = company_top_offset + 1.2 * cm_to_points # 在公司名称行下方 1.2cm
+    date_top_offset = company_top_offset + 1.2 * CM_TO_POINT # 在公司名称行下方 1.2cm
     
     # 添加文本框 (使用矩形 msoShapeRectangle = 1)
-    date_textbox = doc.Shapes.AddShape(1, inner_left  + 8.5 * cm_to_points, inner_top + date_top_offset, sign_width, sign_height)
+    date_textbox = doc.Shapes.AddShape(1, inner_left  + 8.5 * CM_TO_POINT, inner_top + date_top_offset, sign_width, sign_height)
     
     # 设置文本框样式：无填充、无边框
     date_textbox.Fill.Visible = 0
@@ -527,7 +540,7 @@ def create_document(file_path: Path, item: dict):
     # 清除原有制表位
     text_frame_2.TextRange.ParagraphFormat.TabStops.ClearAll()
     # 添加右对齐制表位
-    text_frame_2.TextRange.ParagraphFormat.TabStops.Add(Position=width - 0.25 * cm_to_points, Alignment=2, Leader=0)
+    text_frame_2.TextRange.ParagraphFormat.TabStops.Add(Position=width - 0.25 * CM_TO_POINT, Alignment=2, Leader=0)
 
     # 设置对齐方式：左上角
     # msoAnchorTop = 1
@@ -541,11 +554,15 @@ def create_document(file_path: Path, item: dict):
     text_frame_2.MarginRight = 0
     text_frame_2.MarginBottom = 0
 
+    # 将文本框设置为衬于文字下方
+    # msoSendBehindText = 5
+    rect_page2.ZOrder(5)
+
     # 在文字下方创建一个新的矩形框（主体内容区域）
     # 预留标题高度约 1.15cm
-    header_height = 1.15 * cm_to_points
+    header_height = 1.15 * CM_TO_POINT
     # 内部矩形与外部矩形的间距：0.5cm
-    padding = 0.5 * cm_to_points
+    padding = 0.5 * CM_TO_POINT
 
     inner_top = top + header_height
     # 左边距增加 padding
@@ -564,13 +581,186 @@ def create_document(file_path: Path, item: dict):
     rect_inner2.Line.ForeColor.RGB = 0
     rect_inner2.Line.Weight = 1.2
 
+    # 在内部矩形框中间上方添加文字
+    inner_text_frame_2 = rect_inner2.TextFrame
+    inner_text_frame_2.TextRange.Text = "文件变更记录卡"
+    
+    # 设置字体：思源宋体，二号（22磅），加粗，黑色
+    inner_text_frame_2.TextRange.Font.Name = "思源宋体"
+    inner_text_frame_2.TextRange.Font.Size = 22
+    inner_text_frame_2.TextRange.Font.Bold = True
+    inner_text_frame_2.TextRange.Font.Color = 0
+    
+    # 设置对齐方式：顶端居中
+    inner_text_frame_2.VerticalAnchor = 1 # msoAnchorTop
+    inner_text_frame_2.TextRange.ParagraphFormat.Alignment = 1 # wdAlignParagraphCenter
+    
+    # 移除文本框内边距
+    inner_text_frame_2.MarginLeft = 0
+    inner_text_frame_2.MarginTop = 0
+    inner_text_frame_2.MarginRight = 0
+    inner_text_frame_2.MarginBottom = 0
+
+    # 将文本框设置为衬于文字下方
+    # msoSendBehindText = 5
+    rect_inner2.ZOrder(5)
+
+    # 在“文件变更记录卡”下方添加表格
+    # 表格位置：内部矩形内，距离左右各 0.1cm
+    table_padding = 0.5 * CM_TO_POINT
+    table_left = inner_left + table_padding
+    table_width = inner_width - 2 * table_padding
+    
+    # 垂直位置：标题文字大约占用 1cm - 1.5cm，我们在其下方添加表格
+    # 假设标题文字区域高度 1.5cm
+    table_top_offset = 3 * CM_TO_POINT
+    # 表格的垂直位置不能直接通过 Shapes.AddTable 指定绝对坐标（AddTable 返回 Table 对象，通常插入到 Range）
+    # 但我们可以使用 doc.Tables.Add(Range, NumRows, NumColumns)
+    # 为了精确定位，最好的方法是将表格放在一个文本框内，或者使用 Shapes.AddTable（如果版本支持且也是 Shape）
+    # 或者直接在页面上添加表格，然后设置其 WrapFormat 和位置
+    
+    # 这里我们尝试直接在文档中添加表格，并设置其位置为固定
+    # 首先需要一个 Range，我们创建一个位于文档末尾的 Range（第二页）
+    # 注意：前面的 Selection 已经在第二页末尾
+    
+    # 添加表格：5行2列
+    # 使用 doc.Tables.Add 方法
+    table = doc.Tables.Add(word.Selection.Range, 5, 2)
+    
+    # 设置表格属性
+    table.PreferredWidthType = 3 # wdPreferredWidthPoints
+    table.PreferredWidth = table_width
+    
+    # 设置表格位置（浮动表格）
+    table.Rows.WrapAroundText = 1 # True，使其成为浮动表格以便定位
+    # 设置绝对位置
+    table.Rows.HorizontalPosition = table_left
+    table.Rows.VerticalPosition = inner_top + table_top_offset
+    # 相对位置参考：页面
+    table.Rows.RelativeHorizontalPosition = 1 # wdRelativeHorizontalPositionPage
+    table.Rows.RelativeVerticalPosition = 1 # wdRelativeVerticalPositionPage
+    
+    # 设置表格边框
+    table.Borders.Enable = 1 # 启用所有边框
+    
+    # 设置列宽
+    # 第一列宽度：3cm (约 85磅)
+    col1_width = 6.0 * CM_TO_POINT
+    table.Columns(1).Width = col1_width
+    # 第二列宽度：剩余宽度
+    table.Columns(2).Width = table_width - col1_width
+
+    # 填充第一列内容并设置格式
+    row_titles = ["文件编号", "文件名称", "产品图号", "项目名称", "车种/工区工位号"]
+    
+    for i, title in enumerate(row_titles):
+        # 获取单元格 (行索引从 1 开始)
+        cell = table.Cell(i + 1, 1)
+        # 设置文本
+        # 注意：Cell.Range.Text 赋值会自动包含结束符，所以直接赋值即可
+        cell.Range.Text = title
+        
+        # 设置单元格垂直居中
+        # wdCellAlignVerticalCenter = 1
+        cell.VerticalAlignment = 1
+        
+        # 设置段落格式（水平居中）
+        # wdAlignParagraphCenter = 1
+        para_format = cell.Range.ParagraphFormat
+        para_format.Alignment = 1
+        
+        # 设置行距和段间距
+        # 单倍行距
+        para_format.LineSpacingRule = 0 # wdLineSpaceSingle
+        # 段前段后为0
+        para_format.SpaceBefore = 0
+        para_format.SpaceAfter = 0
+        # 不对齐到网格
+        para_format.DisableLineHeightGrid = True
+        
+        # 设置字体格式
+        # 思源黑体，小三（15磅）
+        cell.Range.Font.Name = "思源黑体"
+        cell.Range.Font.Size = 15
+        cell.Range.Font.Color = 0 # 黑色
+
+    # 在表格正下方添加“文件版本历史记录”文本
+    # 计算位置：表格顶部位置 + 表格高度 + 间距
+    # 假设表格高度：5行 * 每行高度（Word 默认行高或根据内容自适应）
+    # 这里我们估算一下或者设置一个固定的偏移量
+    # 假设表格总高度约 5cm (每行 1cm)
+    history_title_top = inner_top + table_top_offset + 1.0 * CM_TO_POINT
+    
+    # 添加文本框 (使用矩形 msoShapeRectangle = 1)
+    history_textbox = doc.Shapes.AddShape(1, -table_padding, history_title_top, inner_width, 1.5 * CM_TO_POINT)
+    
+    # 设置文本框样式：无填充、无边框
+    history_textbox.Fill.Visible = 0
+    history_textbox.Line.Visible = 0
+    
+    # 设置文本内容
+    history_frame = history_textbox.TextFrame
+    history_range = history_frame.TextRange
+    history_range.Text = "文件版本历史记录"
+    
+    # 设置字体：思源宋体，二号（22磅），加粗，黑色
+    history_range.Font.Name = "思源宋体"
+    history_range.Font.Size = 22
+    history_range.Font.Bold = True
+    history_range.Font.Color = 0
+    
+    # 设置对齐方式：居中
+    history_range.ParagraphFormat.Alignment = 1 # 居中对齐
+    history_frame.VerticalAnchor = 1 # 顶端对齐 (或者居中)
+    
+    # 移除文本框内边距
+    history_frame.MarginLeft = 0
+    history_frame.MarginTop = 0
+    history_frame.MarginRight = 0
+    history_frame.MarginBottom = 0
+    
+    # 设置衬于文字下方
+    history_textbox.ZOrder(5)
+
+    # 在“文件版本历史记录”下方添加第二个表格
+    # 4行5列
+    # 垂直位置：在标题下方 3.5cm 处，增加间距
+    # 注意：history_title_top 是标题的 Top 坐标
+    # 我们希望表格 Top = history_title_top + 间距
+    # 但 VerticalPosition 是相对于 Page 的（如果 RelativeVerticalPosition=1）
+    # 这里我们直接设置绝对位置
+    table2_vertical_pos = history_title_top + 3.5 * CM_TO_POINT
+    
+    # 将光标移动到文档末尾，跳出上一个表格范围
+    word.Selection.EndKey(Unit=6) # wdStory
+    
+    # 添加表格：4行5列
+    # 使用 doc.Tables.Add 方法
+    table2 = doc.Tables.Add(word.Selection.Range, 4, 5)
+    
+    # 设置表格属性
+    table2.PreferredWidthType = 3 # wdPreferredWidthPoints
+    table2.PreferredWidth = table_width # 复用之前的表格宽度
+    
+    # 设置表格位置（浮动表格）
+    table2.Rows.WrapAroundText = 1 # True
+    table2.Rows.HorizontalPosition = table_left # 复用之前的左边距
+    table2.Rows.VerticalPosition = table2_vertical_pos
+    table2.Rows.RelativeHorizontalPosition = 1 # wdRelativeHorizontalPositionPage
+    table2.Rows.RelativeVerticalPosition = 1 # wdRelativeVerticalPositionPage
+    
+    # 设置表格边框
+    table2.Borders.Enable = 1
+
+
+
 
     # 保存文档
     # FileFormat=12 代表 docx 格式 (wdFormatXMLDocument)
     doc.SaveAs(str(file_path), FileFormat=12)
     # 关闭文档和 Word 应用程序
-    doc.Close()
-    word.Quit()
+    # doc.Close()
+    # word.Quit()
 
 
 if __name__ == '__main__':
