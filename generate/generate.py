@@ -4,6 +4,7 @@ import pandas as pd
 import json
 from pathlib import Path
 from docxtpl import DocxTemplate
+from generate.word_api import create_document
 
 title = '工序卡生成'
 st.set_page_config(page_title=title, layout='wide')
@@ -13,52 +14,25 @@ path = Path(__file__).parent.parent / 'database' / '工序卡模板.json'
 template_path = Path(__file__).parent.parent / 'template' / '工序卡模板.docx'
 source_path = Path(__file__).parent.parent / 'source'
 
-if 'res' not in st.session_state:
-    st.session_state['res'] = None
-
-
 def make_main_run(item: dict):
-    '''绘图的主逻辑'''
+    # 绘图的主逻辑'''
     temp_name = f'{datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.docx'
     temp_path = source_path / temp_name
-    '''生成对应的文件'''
-    doc = DocxTemplate(template_path)
-    context = {
-        'confidentiality_level': item['密级/保密期限'],
-        'project_name': item['项目名称'],
-        'process_name': item['工序名称'],
-        'process_code': item['工序编码'],
-        'document_number': item['文件编号'],
-        'component_part_number': item['零部件图号'],
-        'compile_person': item['编制'],
-        'compile_time': item['编制日期'],
-        'proofread_person': item['校对'],
-        'proofread_time': item['校对日期'],
-        'review_person': item['审核'],
-        'review_time': item['审核日期'],
-        'standardization_person': item['标准化'],
-        'standardization_time': item['标准化日期'],
-        'countersign_person': item['会签'],
-        'countersign_time': item['会签日期'],
-        'ratify_person': item['批准'],
-        'ratify_time': item['批准日期'],
-        'applicable_vehicle_models': item['适用车型'],
-        'professional_classification': item['专业分类'],
-    }
-    doc.render(context)
-    doc.save(temp_path)
+    create_document(temp_path, item)
 
-    '''检查并删除多余的pdf'''
+    # 检查并删除多余的文档
     reuqest_time = datetime.datetime.now() - datetime.timedelta(minutes=10)
     for item_file in source_path.iterdir():
         if not item_file.is_file():
             continue
         if item_file.suffix.lower() != '.docx':
             continue
+        if item_file.name[0: 2] == "~$":
+            continue
         file_time = datetime.datetime.strptime(item_file.stem, '%Y-%m-%d-%H-%M-%S')
         if file_time < reuqest_time:
             item_file.unlink()
-    '''返回文件的字节流'''
+    # 返回文件的字节流
     with open(temp_path, 'rb') as _file:
         _bytes = _file.read()
     return temp_name, _bytes
@@ -119,16 +93,18 @@ def generate_page(index: int):
         ),
         hide_index=True
     )
-    if st.session_state['res'] is None:
+    st.info('对应的生成记录会在后台保存10分钟，找回请检查后台文件中的source文件夹')
+    temp_empty = st.empty()
+    with temp_empty:
         with st.container(horizontal=True):
-            submit_label = st.button('双击开始生成', icon=':material/send:', shortcut='enter')
-            cancel_label = st.button('返回', icon=':material/close:', shortcut='esc')
-    else:
-        temp_name, docx_bytes = st.session_state['res']
-        st.info('对应的生成记录会在后台保存10分钟，找回请检查后台文件中的source文件夹')
+            submit_label = st.button('开始生成', icon=':material/send:', shortcut='enter')
+            cancel_label = st.button('返回', icon=':material/close:', shortcut='esc', key='cancel_0')
+    if submit_label:
+        with st.spinner("正在生成文档中", show_time=True):
+            temp_name, docx_bytes = make_main_run(temp_config)
+        temp_empty.empty()
         with st.container(horizontal=True):
-            submit_label = st.button('双击重新生成', icon=':material/send:', shortcut='enter')
-            cancel_label = st.button('返回', icon=':material/close:', shortcut='esc')
+            cancel_label = st.button('返回', icon=':material/close:', shortcut='esc', key='cancel_1')
             st.download_button(
                 label='下载绘制结果',
                 data=docx_bytes,
@@ -136,10 +112,7 @@ def generate_page(index: int):
                 mime='application/docx',
                 icon=':material/download:',
             )
-    if submit_label:
-        st.session_state['res'] = make_main_run(temp_config)
     elif cancel_label:
-        st.session_state['res'] = None
         st.rerun()
 
 

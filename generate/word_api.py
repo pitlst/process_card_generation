@@ -1,9 +1,11 @@
 import win32com.client
+import pythoncom
 from pathlib import Path
 
 CM_TO_POINT = 28.35
 
 def create_document(file_path: Path, item: dict):
+    pythoncom.CoInitialize()
     # 获取绝对路径，Word COM 接口通常需要绝对路径
     file_path = file_path.absolute()
     # 检查文件是否已存在，如果存在先删除，避免 SaveAs 弹窗或报错
@@ -666,8 +668,8 @@ def create_document(file_path: Path, item: dict):
         para_format.DisableLineHeightGrid = True
         
         # 设置字体格式
-        # 思源黑体，小三（15磅）
-        cell.Range.Font.Name = "思源黑体"
+        # 思源宋体，小三（15磅）
+        cell.Range.Font.Name = "思源宋体"
         cell.Range.Font.Size = 15
         cell.Range.Font.Color = 0 # 黑色
 
@@ -754,7 +756,7 @@ def create_document(file_path: Path, item: dict):
         para_format.SpaceAfter = 0
         para_format.DisableLineHeightGrid = True # 不对齐文档网格
         
-        cell.Range.Font.Name = "思源黑体"
+        cell.Range.Font.Name = "思源宋体"
         cell.Range.Font.Size = 15
         cell.Range.Font.Color = 0 # 黑色
 
@@ -766,31 +768,6 @@ def create_document(file_path: Path, item: dict):
     word.Selection.InsertBreak(Type=7)
     
     # 再次移动光标到文档末尾，准备在新页面添加内容
-    word.Selection.EndKey(Unit=6) # wdStory
-
-    # 添加第三页的外矩形
-    # 只要光标在第三页，Shapes.AddShape 就会默认锚定到第三页
-    # 参数与第一页一致
-    rect_page3 = doc.Shapes.AddShape(1, left, top, width, height)
-    
-    # 设置样式
-    rect_page3.Fill.Visible = 0
-    rect_page3.Line.Visible = 1
-    rect_page3.Line.ForeColor.RGB = 0
-    rect_page3.Line.Weight = 1.2
-
-    # 将文本框设置为衬于文字下方
-    # msoSendBehindText = 5
-    rect_page3.ZOrder(5)
-
-    # 在第三页框内部创建表格：6行16列
-    # 表格紧贴框线内部
-    # 顶部位置：top + header_height (预留标题高度，与前几页一致)
-    table3_width = inner_width
-    # 高度占据剩余空间
-    table3_height = inner_height
-
-    # 将光标移动到文档末尾
     word.Selection.EndKey(Unit=6) # wdStory
 
     # 添加表格：2行7列
@@ -818,9 +795,12 @@ def create_document(file_path: Path, item: dict):
     cell_1_1.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
     cell_1_1.Range.ParagraphFormat.SpaceAfter = 0
     cell_1_1.Range.ParagraphFormat.DisableLineHeightGrid = True
-    cell_1_1.Range.Font.Name = "思源黑体"
+    cell_1_1.Range.Font.Name = "思源宋体"
     cell_1_1.Range.Font.Size = 11
     cell_1_1.Range.Font.Color = 0
+    # 将字体的字符间距的缩放调整为90%，间距调整为紧凑
+    cell_1_1.Range.Font.Scaling = 90
+    cell_1_1.Range.Font.Spacing = -1
 
     # 单元格2行1列写入“城轨制造中心”
     cell_2_1 = table3.Cell(2, 1)
@@ -830,7 +810,7 @@ def create_document(file_path: Path, item: dict):
     cell_2_1.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
     cell_2_1.Range.ParagraphFormat.SpaceAfter = 0
     cell_2_1.Range.ParagraphFormat.DisableLineHeightGrid = True
-    cell_2_1.Range.Font.Name = "思源黑体"
+    cell_2_1.Range.Font.Name = "思源宋体"
     cell_2_1.Range.Font.Size = 11
     cell_2_1.Range.Font.Color = 0
     
@@ -845,9 +825,10 @@ def create_document(file_path: Path, item: dict):
     cell_1_2.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
     cell_1_2.Range.ParagraphFormat.SpaceAfter = 0
     cell_1_2.Range.ParagraphFormat.DisableLineHeightGrid = True
-    cell_1_2.Range.Font.Name = "思源黑体"
+    cell_1_2.Range.Font.Name = "思源宋体"
     cell_1_2.Range.Font.Size = 15
     cell_1_2.Range.Font.Color = 0
+    cell_1_2.Range.Font.Bold = True # 加粗
     
     # 给“组装”两个字添加下划线
     # "组装工序卡" -> 前两个字符
@@ -866,7 +847,7 @@ def create_document(file_path: Path, item: dict):
     cell_1_3.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
     cell_1_3.Range.ParagraphFormat.SpaceAfter = 0
     cell_1_3.Range.ParagraphFormat.DisableLineHeightGrid = True
-    cell_1_3.Range.Font.Name = "思源黑体"
+    cell_1_3.Range.Font.Name = "思源宋体"
     cell_1_3.Range.Font.Size = 11
     cell_1_3.Range.Font.Color = 0
     
@@ -878,7 +859,7 @@ def create_document(file_path: Path, item: dict):
     cell_2_3.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
     cell_2_3.Range.ParagraphFormat.SpaceAfter = 0
     cell_2_3.Range.ParagraphFormat.DisableLineHeightGrid = True
-    cell_2_3.Range.Font.Name = "思源黑体"
+    cell_2_3.Range.Font.Name = "思源宋体"
     cell_2_3.Range.Font.Size = 11
     cell_2_3.Range.Font.Color = 0
     
@@ -890,7 +871,7 @@ def create_document(file_path: Path, item: dict):
     cell_1_4.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
     cell_1_4.Range.ParagraphFormat.SpaceAfter = 0
     cell_1_4.Range.ParagraphFormat.DisableLineHeightGrid = True
-    cell_1_4.Range.Font.Name = "思源黑体"
+    cell_1_4.Range.Font.Name = "思源宋体"
     cell_1_4.Range.Font.Size = 11
     cell_1_4.Range.Font.Color = 0
     
@@ -902,7 +883,7 @@ def create_document(file_path: Path, item: dict):
     cell_2_4.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
     cell_2_4.Range.ParagraphFormat.SpaceAfter = 0
     cell_2_4.Range.ParagraphFormat.DisableLineHeightGrid = True
-    cell_2_4.Range.Font.Name = "思源黑体"
+    cell_2_4.Range.Font.Name = "思源宋体"
     cell_2_4.Range.Font.Size = 11
     cell_2_4.Range.Font.Color = 0
     table3.Cell(2, 4).Range.Text = "5214853"
@@ -915,7 +896,7 @@ def create_document(file_path: Path, item: dict):
     cell_1_5.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
     cell_1_5.Range.ParagraphFormat.SpaceAfter = 0
     cell_1_5.Range.ParagraphFormat.DisableLineHeightGrid = True
-    cell_1_5.Range.Font.Name = "思源黑体"
+    cell_1_5.Range.Font.Name = "思源宋体"
     cell_1_5.Range.Font.Size = 11
     cell_1_5.Range.Font.Color = 0
     
@@ -928,7 +909,7 @@ def create_document(file_path: Path, item: dict):
     cell_2_5.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
     cell_2_5.Range.ParagraphFormat.SpaceAfter = 0
     cell_2_5.Range.ParagraphFormat.DisableLineHeightGrid = True
-    cell_2_5.Range.Font.Name = "思源黑体"
+    cell_2_5.Range.Font.Name = "思源宋体"
     cell_2_5.Range.Font.Size = 11
     cell_2_5.Range.Font.Color = 0
     
@@ -940,7 +921,7 @@ def create_document(file_path: Path, item: dict):
     cell_1_7.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
     cell_1_7.Range.ParagraphFormat.SpaceAfter = 0
     cell_1_7.Range.ParagraphFormat.DisableLineHeightGrid = True
-    cell_1_7.Range.Font.Name = "思源黑体"
+    cell_1_7.Range.Font.Name = "思源宋体"
     cell_1_7.Range.Font.Size = 11
     cell_1_7.Range.Font.Color = 0
     
@@ -952,22 +933,419 @@ def create_document(file_path: Path, item: dict):
     cell_2_7.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
     cell_2_7.Range.ParagraphFormat.SpaceAfter = 0
     cell_2_7.Range.ParagraphFormat.DisableLineHeightGrid = True
-    cell_2_7.Range.Font.Name = "思源黑体"
+    cell_2_7.Range.Font.Name = "思源宋体"
     cell_2_7.Range.Font.Size = 11
     cell_2_7.Range.Font.Color = 0
 
+    # 在table3下方添加table4：1行2列
+    # 移动光标到文档末尾
+    word.Selection.EndKey(Unit=6) # wdStory
 
-    # # 统一设置格式
-    # for row in table3.Rows:
-    #     for cell in row.Cells:
-    #         cell.VerticalAlignment = 1 # 垂直居中
-    #         cell.Range.ParagraphFormat.Alignment = 1 # 水平居中
-    #         cell.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
-    #         cell.Range.ParagraphFormat.SpaceAfter = 0
-    #         cell.Range.ParagraphFormat.DisableLineHeightGrid = True
-    #         cell.Range.Font.Name = "思源黑体"
-    #         cell.Range.Font.Size = 15
-    #         cell.Range.Font.Color = 0
+    # 估算table3高度
+    table4_top = 2.5 * CM_TO_POINT
+
+    table4 = doc.Tables.Add(word.Selection.Range, 1, 2)
+    table4.PreferredWidthType = 3
+    table4.PreferredWidth = width
+
+    # 设置位置
+    table4.Rows.WrapAroundText = 1
+    table4.Rows.HorizontalPosition = left # 2.2cm
+    table4.Rows.VerticalPosition = table4_top
+    table4.Rows.RelativeHorizontalPosition = 1
+    table4.Rows.RelativeVerticalPosition = 1
+    
+    # 设置边框
+    table4.Borders.Enable = 1
+
+    # 设置行高：内部框高度的80%
+    # height 是之前计算的页面内容高度 (约20cm)
+    table4_height = height * 0.725
+    table4.Rows.HeightRule = 2 # wdRowHeightExactly
+    table4.Rows.Height = table4_height
+
+    # 设置列宽
+    # 第一列宽度：一个字宽度，约1cm
+    col1_width = 1.0 * CM_TO_POINT
+    table4.Columns(1).Width = col1_width
+    table4.Columns(2).Width = width - col1_width
+
+    # 设置第一列内容
+    cell_4_1 = table4.Cell(1, 1)
+    cell_4_1.Range.Text = "工位作业内容及工装工具物料明细"
+    # 竖排文字
+    cell_4_1.Range.Orientation = 5 # wdTextOrientationVerticalFarEast
+    
+    # 设置字体格式
+    cell_4_1.Range.Font.Name = "思源宋体"
+    cell_4_1.Range.Font.Size = 10.5 # 5号
+    cell_4_1.Range.Font.Bold = True
+    cell_4_1.Range.Font.Color = 0
+    
+    # 设置对齐
+    cell_4_1.VerticalAlignment = 1 # 垂直居中 (在竖排时即水平居中)
+    cell_4_1.Range.ParagraphFormat.Alignment = 1 # 水平居中 (在竖排时即垂直居中)
+    cell_4_1.Range.ParagraphFormat.DisableLineHeightGrid = True
+
+    # 在table4的第二列内部创建一个表格：2列10行
+    cell_4_2 = table4.Cell(1, 2)
+    # 稍微调整一下单元格的边距，以免嵌套表格贴边太紧（可选）
+    cell_4_2.TopPadding = 0
+    cell_4_2.BottomPadding = 0
+    cell_4_2.LeftPadding = 0
+    cell_4_2.RightPadding = 0
+    
+    # 在单元格内添加表格
+    # 先创建1行，再追加9行，确保总共有10行
+    sub_table = doc.Tables.Add(cell_4_2.Range, 1, 2)
+    for _ in range(14):
+        sub_table.Rows.Add()
+    
+    # 设置嵌套表格属性
+    sub_table.Borders.Enable = 1
+    sub_table.Borders.InsideLineStyle = 1
+    sub_table.Borders.OutsideLineStyle = 1
+    
+    # 表格在单元格内部右对齐
+    sub_table.Rows.Alignment = 2 # wdAlignRowRight
+    
+    # 如果需要控制嵌套表格的宽度，可以在这里设置
+    # 例如，设为父单元格宽度的一半，或者固定宽度
+    # 暂时保持默认，或者根据内容自适应。
+    # 通常物料清单可能需要一定宽度。这里假设占父单元格的一半或者特定宽度？
+    # 用户只说了“放在单元格内部的右侧”，没说宽度。
+    # 为了体现“右侧”，最好不要占满。设为父单元格宽度的 60% 吧，或者固定值。
+    # 父单元格宽度 = width - 1cm (约 19cm - 1cm = 18cm)
+    # 设为 10cm 宽试一下，或者不设宽度让其自动，但自动往往是全宽。
+    # Word中插入表格默认往往是根据容器宽度。
+    # 让我们尝试设置 PreferredWidth
+    sub_table_width = (width - col1_width) * 0.5 # 占一半宽度
+    sub_table.PreferredWidthType = 3 # Points
+    sub_table.PreferredWidth = sub_table_width
+    # 设置表格所有行的高度一致
+    sub_table.Rows.HeightRule = 2 # wdRowHeightExactly
+    sub_table.Rows.Height = 0.8 * CM_TO_POINT
+    # 设置表头内容
+    sub_table.Cell(1, 1).Range.Text = "序号"
+    sub_table.Cell(1, 2).Range.Text = "物料名称"
+    # 设置表头格式
+    header_row = sub_table.Rows(1)
+    header_row.Range.Font.Name = "思源宋体"
+    header_row.Range.Font.Size = 10.5 # 5号
+    header_row.Range.Font.Bold = True
+    header_row.Range.ParagraphFormat.Alignment = 1 # 居中
+    # 调整序号列宽，比较窄
+    sub_table.Columns(1).Width = 1.5 * CM_TO_POINT
+    sub_table.Columns(2).Width = sub_table_width - (1.5 * CM_TO_POINT)
+
+
+    table4.Rows.VerticalPosition = 0
+    # -------------------------------------------------------------------------
+    # 在table4下方添加table5：3行16列
+    # -------------------------------------------------------------------------
+    word.Selection.EndKey(Unit=6) # wdStory
+
+    table5 = doc.Tables.Add(word.Selection.Range, 3, 16)
+    table5.PreferredWidthType = 3
+    table5.PreferredWidth = width
+    table5.Rows.VerticalPosition = 0
+
+    # 设置边框
+    table5.Borders.Enable = 1
+    
+    # 填充最后一行(第3行)内容
+    footer_texts = ["标记", "处数", "更改文件号", "签字", "日期", 
+                    "标记", "处数", "更改文件号", "签字", "日期", 
+                    "标记", "处数", "更改文件号", "签字", "日期", "共8页"]
+    
+    for i, text in enumerate(footer_texts):
+        # 表格列索引从1开始
+        table5.Cell(3, i + 1).Range.Text = text
+
+    # 设置整体字体格式
+    table5.Range.Font.Name = "思源宋体"
+    table5.Range.Font.Size = 10.5 # 5号
+    
+    # 设置对齐方式
+    # 垂直居中
+    for row in table5.Rows:
+        row.Cells.VerticalAlignment = 1 # wdCellAlignVerticalCenter
+    
+    # 水平居中及行距设置
+    table5.Range.ParagraphFormat.Alignment = 1 # wdAlignParagraphCenter
+    table5.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    table5.Range.ParagraphFormat.SpaceAfter = 0 # 段后0行
+    table5.Range.ParagraphFormat.DisableLineHeightGrid = True
+
+    word.Selection.EndKey(Unit=6) # wdStory
+    word.Selection.TypeParagraph()
+    
+    # 添加表格：2行7列
+    table6 = doc.Tables.Add(word.Selection.Range, 2, 7)
+
+    # 设置表格属性
+    table6.PreferredWidthType = 3 # wdPreferredWidthPoints
+
+    # 设置表格位置（浮动表格）
+    table6.Rows.WrapAroundText = 1 # True
+    table6.Rows.HorizontalPosition = 2.2 * CM_TO_POINT
+    table6.Rows.VerticalPosition = 0.5 * CM_TO_POINT
+    table6.Rows.RelativeHorizontalPosition = 1 # wdRelativeHorizontalPositionPage
+    table6.Rows.RelativeVerticalPosition = 1 # wdRelativeVerticalPositionPage
+
+    # 设置表格边框
+    table6.Borders.Enable = 1
+
+    # 填充表格内容
+    # 单元格1行1列写入“中车株洲电力机车有限公司”
+    cell_1_1 = table6.Cell(1, 1)
+    cell_1_1.Range.Text = "中车株洲电力机车有限公司"
+    cell_1_1.VerticalAlignment = 1 # 垂直居中
+    cell_1_1.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_1_1.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_1_1.Range.ParagraphFormat.SpaceAfter = 0
+    cell_1_1.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_1_1.Range.Font.Name = "思源宋体"
+    cell_1_1.Range.Font.Size = 11
+    cell_1_1.Range.Font.Color = 0
+    # 将字体的字符间距的缩放调整为90%，间距调整为紧凑
+    cell_1_1.Range.Font.Scaling = 90
+    cell_1_1.Range.Font.Spacing = -1
+
+    # 单元格2行1列写入“城轨制造中心”
+    cell_2_1 = table6.Cell(2, 1)
+    cell_2_1.Range.Text = "城轨制造中心"
+    cell_2_1.VerticalAlignment = 1 # 垂直居中
+    cell_2_1.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_2_1.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_2_1.Range.ParagraphFormat.SpaceAfter = 0
+    cell_2_1.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_2_1.Range.Font.Name = "思源宋体"
+    cell_2_1.Range.Font.Size = 11
+    cell_2_1.Range.Font.Color = 0
+    
+    # 单元格1行2列和2行2列合并为一个单元格写入“组装工序卡”
+    cell_1_2 = table6.Cell(1, 2)
+    cell_2_2 = table6.Cell(2, 2)
+    cell_1_2.Merge(cell_2_2)
+    # 合并后使用 cell_1_2 访问
+    cell_1_2.Range.Text = "组装工序卡"
+    cell_1_2.VerticalAlignment = 1 # 垂直居中
+    cell_1_2.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_1_2.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_1_2.Range.ParagraphFormat.SpaceAfter = 0
+    cell_1_2.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_1_2.Range.Font.Name = "思源宋体"
+    cell_1_2.Range.Font.Size = 15
+    cell_1_2.Range.Font.Color = 0
+    cell_1_2.Range.Font.Bold = True # 加粗
+    
+    # 给“组装”两个字添加下划线
+    # "组装工序卡" -> 前两个字符
+    # Word Range 索引从 0 开始 (Python 切片风格) 或者 Characters 集合从 1 开始
+    # 使用 Characters(Start, End) 或者 Range(Start, End)
+    # 注意：Cell.Range 包含单元格结束符，所以需要小心处理
+    # 直接获取 Characters(1) 和 Characters(2)
+    cell_1_2.Range.Characters(1).Font.Underline = 1 # wdUnderlineSingle
+    cell_1_2.Range.Characters(2).Font.Underline = 1 # wdUnderlineSingle
+    
+    # 单元格1行3列写入“文件名称”
+    cell_1_3 = table6.Cell(1, 3)
+    cell_1_3.Range.Text = "文件名称"
+    cell_1_3.VerticalAlignment = 1 # 垂直居中
+    cell_1_3.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_1_3.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_1_3.Range.ParagraphFormat.SpaceAfter = 0
+    cell_1_3.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_1_3.Range.Font.Name = "思源宋体"
+    cell_1_3.Range.Font.Size = 11
+    cell_1_3.Range.Font.Color = 0
+    
+    # 单元格2行3列写入“内装工位”
+    cell_2_3 = table6.Cell(2, 3)
+    cell_2_3.Range.Text = "内装工位"
+    cell_2_3.VerticalAlignment = 1 # 垂直居中
+    cell_2_3.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_2_3.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_2_3.Range.ParagraphFormat.SpaceAfter = 0
+    cell_2_3.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_2_3.Range.Font.Name = "思源宋体"
+    cell_2_3.Range.Font.Size = 11
+    cell_2_3.Range.Font.Color = 0
+    
+    # 单元格1行4列写入“工序标识”
+    cell_1_4 = table6.Cell(1, 4)
+    cell_1_4.Range.Text = "工序标识"
+    cell_1_4.VerticalAlignment = 1 # 垂直居中
+    cell_1_4.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_1_4.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_1_4.Range.ParagraphFormat.SpaceAfter = 0
+    cell_1_4.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_1_4.Range.Font.Name = "思源宋体"
+    cell_1_4.Range.Font.Size = 11
+    cell_1_4.Range.Font.Color = 0
+    
+    # 单元格2行4列写入“5214853”
+    cell_2_4 = table6.Cell(2, 4)
+    cell_2_4.Range.Text = "5214853"
+    cell_2_4.VerticalAlignment = 1 # 垂直居中
+    cell_2_4.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_2_4.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_2_4.Range.ParagraphFormat.SpaceAfter = 0
+    cell_2_4.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_2_4.Range.Font.Name = "思源宋体"
+    cell_2_4.Range.Font.Size = 11
+    cell_2_4.Range.Font.Color = 0
+    table3.Cell(2, 4).Range.Text = "5214853"
+    
+    # 单元格1行5列写入“图号”
+    cell_1_5 = table6.Cell(1, 5)
+    cell_1_5.Range.Text = "图号"
+    cell_1_5.VerticalAlignment = 1 # 垂直居中
+    cell_1_5.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_1_5.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_1_5.Range.ParagraphFormat.SpaceAfter = 0
+    cell_1_5.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_1_5.Range.Font.Name = "思源宋体"
+    cell_1_5.Range.Font.Size = 11
+    cell_1_5.Range.Font.Color = 0
+    
+    
+    # 单元格2行5列写入“AJP1023290A”
+    cell_2_5 = table6.Cell(2, 5)
+    cell_2_5.Range.Text = "AJP1023290A"
+    cell_2_5.VerticalAlignment = 1 # 垂直居中
+    cell_2_5.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_2_5.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_2_5.Range.ParagraphFormat.SpaceAfter = 0
+    cell_2_5.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_2_5.Range.Font.Name = "思源宋体"
+    cell_2_5.Range.Font.Size = 11
+    cell_2_5.Range.Font.Color = 0
+    
+    # 单元格1行7列写入“工序工时(min)”
+    cell_1_7 = table6.Cell(1, 7)
+    cell_1_7.Range.Text = "工序工时(min)"
+    cell_1_7.VerticalAlignment = 1 # 垂直居中
+    cell_1_7.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_1_7.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_1_7.Range.ParagraphFormat.SpaceAfter = 0
+    cell_1_7.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_1_7.Range.Font.Name = "思源宋体"
+    cell_1_7.Range.Font.Size = 11
+    cell_1_7.Range.Font.Color = 0
+    
+    # 单元格2行7列写入“650min”
+    cell_2_7 = table6.Cell(2, 7)
+    cell_2_7.Range.Text = "650min"
+    cell_2_7.VerticalAlignment = 1 # 垂直居中
+    cell_2_7.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_2_7.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_2_7.Range.ParagraphFormat.SpaceAfter = 0
+    cell_2_7.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_2_7.Range.Font.Name = "思源宋体"
+    cell_2_7.Range.Font.Size = 11
+    cell_2_7.Range.Font.Color = 0
+
+    # 在table3下方添加table4：1行2列
+    # 移动光标到文档末尾
+    word.Selection.EndKey(Unit=6) # wdStory
+
+   # 在table3下方添加table4：1行2列
+    # 移动光标到文档末尾
+    word.Selection.EndKey(Unit=6) # wdStory
+
+    # 估算table3高度
+    table7_top = 2.5 * CM_TO_POINT
+
+    table7 = doc.Tables.Add(word.Selection.Range, 1, 2)
+    table7.PreferredWidthType = 3
+    table7.PreferredWidth = width
+
+    # 设置位置
+    table7.Rows.WrapAroundText = 1
+    table7.Rows.HorizontalPosition = left # 2.2cm
+    table7.Rows.VerticalPosition = table7_top
+    table7.Rows.RelativeHorizontalPosition = 1
+    table7.Rows.RelativeVerticalPosition = 1
+    
+    # 设置边框
+    table7.Borders.Enable = 1
+
+    # 设置行高：内部框高度的80%
+    # height 是之前计算的页面内容高度 (约20cm)
+    table7_height = height * 0.725
+    table7.Rows.HeightRule = 2 # wdRowHeightExactly
+    table7.Rows.Height = table7_height
+
+    # 设置列宽
+    # 第一列宽度：一个字宽度，约1cm
+    col1_width = 1.0 * CM_TO_POINT
+    table7.Columns(1).Width = col1_width
+    table7.Columns(2).Width = width - col1_width
+
+    # 设置第一列内容
+    cell_4_1 = table7.Cell(1, 1)
+    cell_4_1.Range.Text = "工序流程及状态图"
+    # 竖排文字
+    cell_4_1.Range.Orientation = 5 # wdTextOrientationVerticalFarEast
+    
+    # 设置字体格式
+    cell_4_1.Range.Font.Name = "思源宋体"
+    cell_4_1.Range.Font.Size = 10.5 # 5号
+    cell_4_1.Range.Font.Bold = True
+    cell_4_1.Range.Font.Color = 0
+    
+    # 设置对齐
+    cell_4_1.VerticalAlignment = 1 # 垂直居中 (在竖排时即水平居中)
+    cell_4_1.Range.ParagraphFormat.Alignment = 1 # 水平居中 (在竖排时即垂直居中)
+    cell_4_1.Range.ParagraphFormat.DisableLineHeightGrid = True
+
+    # 在table4的第二列内部创建一个表格：2列10行
+    cell_4_2 = table7.Cell(1, 2)
+    # 稍微调整一下单元格的边距，以免嵌套表格贴边太紧（可选）
+    cell_4_2.TopPadding = 0
+    cell_4_2.BottomPadding = 0
+    cell_4_2.LeftPadding = 0
+    cell_4_2.RightPadding = 0
+
+    table7.Rows.VerticalPosition = 0
+    # -------------------------------------------------------------------------
+    # 在table7下方添加table8：3行16列
+    # -------------------------------------------------------------------------
+    word.Selection.EndKey(Unit=6) # wdStory
+
+    table8 = doc.Tables.Add(word.Selection.Range, 3, 16)
+    table8.PreferredWidthType = 3
+    table8.PreferredWidth = width
+    table8.Rows.VerticalPosition = 0
+
+    # 设置边框
+    table8.Borders.Enable = 1
+    
+    # 填充最后一行(第3行)内容
+    footer_texts = ["标记", "处数", "更改文件号", "签字", "日期", 
+                    "标记", "处数", "更改文件号", "签字", "日期", 
+                    "标记", "处数", "更改文件号", "签字", "日期", "共8页"]
+    
+    for i, text in enumerate(footer_texts):
+        # 表格列索引从1开始
+        table8.Cell(3, i + 1).Range.Text = text
+
+    # 设置整体字体格式
+    table8.Range.Font.Name = "思源宋体"
+    table8.Range.Font.Size = 10.5 # 5号
+    
+    # 设置对齐方式
+    # 垂直居中
+    for row in table8.Rows:
+        row.Cells.VerticalAlignment = 1 # wdCellAlignVerticalCenter
+    
+    # 水平居中及行距设置
+    table8.Range.ParagraphFormat.Alignment = 1 # wdAlignParagraphCenter
+    table8.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    table8.Range.ParagraphFormat.SpaceAfter = 0 # 段后0行
+    table8.Range.ParagraphFormat.DisableLineHeightGrid = True
 
     # 保存文档
     # FileFormat=12 代表 docx 格式 (wdFormatXMLDocument)
