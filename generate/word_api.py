@@ -27,19 +27,6 @@ def create_document(file_path: Path, item: dict):
     doc.PageSetup.TopMargin = 0.5 * CM_TO_POINT
     doc.PageSetup.BottomMargin = 0.5 * CM_TO_POINT
 
-    page_width = doc.PageSetup.PageWidth
-    page_height = doc.PageSetup.PageHeight
-    
-    left = doc.PageSetup.LeftMargin
-    top = doc.PageSetup.TopMargin
-    width = page_width - left - doc.PageSetup.RightMargin
-    height = page_height - top - doc.PageSetup.BottomMargin
-    
-    doc.PageSetup.LeftMargin = 2.2 * CM_TO_POINT
-    doc.PageSetup.RightMargin = 0.5 * CM_TO_POINT
-    doc.PageSetup.TopMargin = 0.5 * CM_TO_POINT
-    doc.PageSetup.BottomMargin = 0.5 * CM_TO_POINT
-
     # 绘制页面边框矩形（沿着页边距）
     # 获取页面宽高和边距
     page_width = doc.PageSetup.PageWidth
@@ -729,7 +716,7 @@ def create_document(file_path: Path, item: dict):
     # 我们希望表格 Top = history_title_top + 间距
     # 但 VerticalPosition 是相对于 Page 的（如果 RelativeVerticalPosition=1）
     # 这里我们直接设置绝对位置
-    table2_vertical_pos = history_title_top + 3.5 * CM_TO_POINT
+    table2_vertical_pos = history_title_top + 7.0 * CM_TO_POINT
     
     # 将光标移动到文档末尾，跳出上一个表格范围
     word.Selection.EndKey(Unit=6) # wdStory
@@ -752,8 +739,235 @@ def create_document(file_path: Path, item: dict):
     # 设置表格边框
     table2.Borders.Enable = 1
 
+    # 填充第二页表格第一行表头
+    table2_headers = ["版本号", "实施日期", "编制者", "变更记录", "文件状态"]
+    for i, header in enumerate(table2_headers):
+        cell = table2.Cell(1, i + 1)
+        cell.Range.Text = header
+        
+        # 设置单元格样式
+        cell.VerticalAlignment = 1 # wdCellAlignVerticalCenter
+        
+        para_format = cell.Range.ParagraphFormat
+        para_format.Alignment = 1 # wdAlignParagraphCenter
+        para_format.LineSpacingRule = 0 # wdLineSpaceSingle
+        para_format.SpaceAfter = 0
+        para_format.DisableLineHeightGrid = True # 不对齐文档网格
+        
+        cell.Range.Font.Name = "思源黑体"
+        cell.Range.Font.Size = 15
+        cell.Range.Font.Color = 0 # 黑色
+
+    # 移动光标到文档末尾，跳出上一个表格范围
+    word.Selection.EndKey(Unit=6) # wdStory
+    
+    # 插入分页符，创建新页面（第三页）
+    # wdPageBreak = 7
+    word.Selection.InsertBreak(Type=7)
+    
+    # 再次移动光标到文档末尾，准备在新页面添加内容
+    word.Selection.EndKey(Unit=6) # wdStory
+
+    # 添加第三页的外矩形
+    # 只要光标在第三页，Shapes.AddShape 就会默认锚定到第三页
+    # 参数与第一页一致
+    rect_page3 = doc.Shapes.AddShape(1, left, top, width, height)
+    
+    # 设置样式
+    rect_page3.Fill.Visible = 0
+    rect_page3.Line.Visible = 1
+    rect_page3.Line.ForeColor.RGB = 0
+    rect_page3.Line.Weight = 1.2
+
+    # 将文本框设置为衬于文字下方
+    # msoSendBehindText = 5
+    rect_page3.ZOrder(5)
+
+    # 在第三页框内部创建表格：6行16列
+    # 表格紧贴框线内部
+    # 顶部位置：top + header_height (预留标题高度，与前几页一致)
+    table3_width = inner_width
+    # 高度占据剩余空间
+    table3_height = inner_height
+
+    # 将光标移动到文档末尾
+    word.Selection.EndKey(Unit=6) # wdStory
+
+    # 添加表格：2行7列
+    table3 = doc.Tables.Add(word.Selection.Range, 2, 7)
+
+    # 设置表格属性
+    table3.PreferredWidthType = 3 # wdPreferredWidthPoints
+
+    # 设置表格位置（浮动表格）
+    table3.Rows.WrapAroundText = 1 # True
+    table3.Rows.HorizontalPosition = 2.2 * CM_TO_POINT
+    table3.Rows.VerticalPosition = 0.5 * CM_TO_POINT
+    table3.Rows.RelativeHorizontalPosition = 1 # wdRelativeHorizontalPositionPage
+    table3.Rows.RelativeVerticalPosition = 1 # wdRelativeVerticalPositionPage
+
+    # 设置表格边框
+    table3.Borders.Enable = 1
+
+    # 填充表格内容
+    # 单元格1行1列写入“中车株洲电力机车有限公司”
+    cell_1_1 = table3.Cell(1, 1)
+    cell_1_1.Range.Text = "中车株洲电力机车有限公司"
+    cell_1_1.VerticalAlignment = 1 # 垂直居中
+    cell_1_1.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_1_1.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_1_1.Range.ParagraphFormat.SpaceAfter = 0
+    cell_1_1.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_1_1.Range.Font.Name = "思源黑体"
+    cell_1_1.Range.Font.Size = 11
+    cell_1_1.Range.Font.Color = 0
+
+    # 单元格2行1列写入“城轨制造中心”
+    cell_2_1 = table3.Cell(2, 1)
+    cell_2_1.Range.Text = "城轨制造中心"
+    cell_2_1.VerticalAlignment = 1 # 垂直居中
+    cell_2_1.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_2_1.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_2_1.Range.ParagraphFormat.SpaceAfter = 0
+    cell_2_1.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_2_1.Range.Font.Name = "思源黑体"
+    cell_2_1.Range.Font.Size = 11
+    cell_2_1.Range.Font.Color = 0
+    
+    # 单元格1行2列和2行2列合并为一个单元格写入“组装工序卡”
+    cell_1_2 = table3.Cell(1, 2)
+    cell_2_2 = table3.Cell(2, 2)
+    cell_1_2.Merge(cell_2_2)
+    # 合并后使用 cell_1_2 访问
+    cell_1_2.Range.Text = "组装工序卡"
+    cell_1_2.VerticalAlignment = 1 # 垂直居中
+    cell_1_2.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_1_2.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_1_2.Range.ParagraphFormat.SpaceAfter = 0
+    cell_1_2.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_1_2.Range.Font.Name = "思源黑体"
+    cell_1_2.Range.Font.Size = 15
+    cell_1_2.Range.Font.Color = 0
+    
+    # 给“组装”两个字添加下划线
+    # "组装工序卡" -> 前两个字符
+    # Word Range 索引从 0 开始 (Python 切片风格) 或者 Characters 集合从 1 开始
+    # 使用 Characters(Start, End) 或者 Range(Start, End)
+    # 注意：Cell.Range 包含单元格结束符，所以需要小心处理
+    # 直接获取 Characters(1) 和 Characters(2)
+    cell_1_2.Range.Characters(1).Font.Underline = 1 # wdUnderlineSingle
+    cell_1_2.Range.Characters(2).Font.Underline = 1 # wdUnderlineSingle
+    
+    # 单元格1行3列写入“文件名称”
+    cell_1_3 = table3.Cell(1, 3)
+    cell_1_3.Range.Text = "文件名称"
+    cell_1_3.VerticalAlignment = 1 # 垂直居中
+    cell_1_3.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_1_3.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_1_3.Range.ParagraphFormat.SpaceAfter = 0
+    cell_1_3.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_1_3.Range.Font.Name = "思源黑体"
+    cell_1_3.Range.Font.Size = 11
+    cell_1_3.Range.Font.Color = 0
+    
+    # 单元格2行3列写入“内装工位”
+    cell_2_3 = table3.Cell(2, 3)
+    cell_2_3.Range.Text = "内装工位"
+    cell_2_3.VerticalAlignment = 1 # 垂直居中
+    cell_2_3.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_2_3.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_2_3.Range.ParagraphFormat.SpaceAfter = 0
+    cell_2_3.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_2_3.Range.Font.Name = "思源黑体"
+    cell_2_3.Range.Font.Size = 11
+    cell_2_3.Range.Font.Color = 0
+    
+    # 单元格1行4列写入“工序标识”
+    cell_1_4 = table3.Cell(1, 4)
+    cell_1_4.Range.Text = "工序标识"
+    cell_1_4.VerticalAlignment = 1 # 垂直居中
+    cell_1_4.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_1_4.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_1_4.Range.ParagraphFormat.SpaceAfter = 0
+    cell_1_4.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_1_4.Range.Font.Name = "思源黑体"
+    cell_1_4.Range.Font.Size = 11
+    cell_1_4.Range.Font.Color = 0
+    
+    # 单元格2行4列写入“5214853”
+    cell_2_4 = table3.Cell(2, 4)
+    cell_2_4.Range.Text = "5214853"
+    cell_2_4.VerticalAlignment = 1 # 垂直居中
+    cell_2_4.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_2_4.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_2_4.Range.ParagraphFormat.SpaceAfter = 0
+    cell_2_4.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_2_4.Range.Font.Name = "思源黑体"
+    cell_2_4.Range.Font.Size = 11
+    cell_2_4.Range.Font.Color = 0
+    table3.Cell(2, 4).Range.Text = "5214853"
+    
+    # 单元格1行5列写入“图号”
+    cell_1_5 = table3.Cell(1, 5)
+    cell_1_5.Range.Text = "图号"
+    cell_1_5.VerticalAlignment = 1 # 垂直居中
+    cell_1_5.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_1_5.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_1_5.Range.ParagraphFormat.SpaceAfter = 0
+    cell_1_5.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_1_5.Range.Font.Name = "思源黑体"
+    cell_1_5.Range.Font.Size = 11
+    cell_1_5.Range.Font.Color = 0
+    
+    
+    # 单元格2行5列写入“AJP1023290A”
+    cell_2_5 = table3.Cell(2, 5)
+    cell_2_5.Range.Text = "AJP1023290A"
+    cell_2_5.VerticalAlignment = 1 # 垂直居中
+    cell_2_5.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_2_5.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_2_5.Range.ParagraphFormat.SpaceAfter = 0
+    cell_2_5.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_2_5.Range.Font.Name = "思源黑体"
+    cell_2_5.Range.Font.Size = 11
+    cell_2_5.Range.Font.Color = 0
+    
+    # 单元格1行7列写入“工序工时(min)”
+    cell_1_7 = table3.Cell(1, 7)
+    cell_1_7.Range.Text = "工序工时(min)"
+    cell_1_7.VerticalAlignment = 1 # 垂直居中
+    cell_1_7.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_1_7.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_1_7.Range.ParagraphFormat.SpaceAfter = 0
+    cell_1_7.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_1_7.Range.Font.Name = "思源黑体"
+    cell_1_7.Range.Font.Size = 11
+    cell_1_7.Range.Font.Color = 0
+    
+    # 单元格2行7列写入“650min”
+    cell_2_7 = table3.Cell(2, 7)
+    cell_2_7.Range.Text = "650min"
+    cell_2_7.VerticalAlignment = 1 # 垂直居中
+    cell_2_7.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    cell_2_7.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    cell_2_7.Range.ParagraphFormat.SpaceAfter = 0
+    cell_2_7.Range.ParagraphFormat.DisableLineHeightGrid = True
+    cell_2_7.Range.Font.Name = "思源黑体"
+    cell_2_7.Range.Font.Size = 11
+    cell_2_7.Range.Font.Color = 0
 
 
+    # # 统一设置格式
+    # for row in table3.Rows:
+    #     for cell in row.Cells:
+    #         cell.VerticalAlignment = 1 # 垂直居中
+    #         cell.Range.ParagraphFormat.Alignment = 1 # 水平居中
+    #         cell.Range.ParagraphFormat.LineSpacingRule = 0 # 单倍行距
+    #         cell.Range.ParagraphFormat.SpaceAfter = 0
+    #         cell.Range.ParagraphFormat.DisableLineHeightGrid = True
+    #         cell.Range.Font.Name = "思源黑体"
+    #         cell.Range.Font.Size = 15
+    #         cell.Range.Font.Color = 0
 
     # 保存文档
     # FileFormat=12 代表 docx 格式 (wdFormatXMLDocument)
